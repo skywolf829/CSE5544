@@ -222,7 +222,7 @@ public class DataVisualizer : MonoBehaviour
     public void StartVisualization1()
     {
         this.StopAllCoroutines();
-        vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
+        //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization1Pretty(2));
     }
 
@@ -264,7 +264,7 @@ public class DataVisualizer : MonoBehaviour
     public void StartVisualization2()
     {
         this.StopAllCoroutines();
-        vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
+        //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization2Pretty(2));
     }
 
@@ -307,7 +307,7 @@ public class DataVisualizer : MonoBehaviour
     public void StartVisualization3()
     {
         this.StopAllCoroutines();
-        vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
+        //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization3Pretty(2));
     }
 
@@ -354,7 +354,7 @@ public class DataVisualizer : MonoBehaviour
     public void StartVisualization4()
     {
         this.StopAllCoroutines();
-        vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
+        //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization4Pretty(2));
     }
 
