@@ -21,10 +21,14 @@ INSTUCTIONS WHILE RUNNING
     backward, left, and right, respectively. Similarly, Q and E will make you move
     downward and upward, respectively. While holding shift still, moving the mouse 
     will cause the camera to rotate.
+    When in Visualization 1 or 4, you may ajust the "cutoff plane" in the top left.
+    Click and drag on the dial to choose a cutoff height. The points displayed will
+    only be those with values higher than the cutoff plane specified.
 
 
 NOTES:
     -Best viewed in at least 1920x1080 for UI concerns.
-    -Cubes typically will cause less lag than spheres in the program
+    -Cubes (1.9mil verts total) typically will cause less lag than spheres(40mil verts total)
+    in the program 
     -Click "Reset" to send all data points back to their initialized state
     

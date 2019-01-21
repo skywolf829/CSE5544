@@ -12,6 +12,7 @@ public class DataVisualizer : MonoBehaviour
     public float maxHeight;
     public float xTicks, yTicks, zTicks;
     public GameObject vizGameObject;
+    public GameObject Legend;
     public Mesh arrow, sphere;
     public GameObject TMProPrefab;
     public Material red, blue, green;
@@ -28,7 +29,18 @@ public class DataVisualizer : MonoBehaviour
         ParticleSystem.MainModule mainModule = vizGameObject.GetComponent<ParticleSystem>().main;
         mainModule.maxParticles = data.Count * data[0].Count;
         InstantiateParticles();        
-    }    
+    }
+    private void Update()
+    {
+        if(currentViz == 2 || currentViz == 3)
+        {
+            Legend.SetActive(true);
+        }
+        else
+        {
+            Legend.SetActive(false);
+        }
+    }
     float GetDataForIndex(int i)
     {
         return data[(int)(i / data[0].Count)][i % data[0].Count];
@@ -316,7 +328,7 @@ public class DataVisualizer : MonoBehaviour
 
     public void StartVisualization1()
     { 
-    currentViz = 1;
+        currentViz = 1;
         this.StopAllCoroutines();
         //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization1Pretty(2));
