@@ -24,4 +24,7 @@ INSTUCTIONS WHILE RUNNING
 
 
 NOTES:
-    Best viewed in at least 1920x1080 for UI concerns.
+    -Best viewed in at least 1920x1080 for UI concerns.
+    -Cubes typically will cause less lag than spheres in the program
+    -Click "Reset" to send all data points back to their initialized state
+    
