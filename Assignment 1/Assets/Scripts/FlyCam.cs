@@ -73,7 +73,12 @@ public class FlyCam : MonoBehaviour
         {
             transform.Translate(p);
         }
-
+        /*
+        foreach(GameObject g in GameObject.FindGameObjectsWithTag("3DText"))
+        {
+            g.transform.LookAt(g.transform.position + (g.transform.position - Camera.main.transform.position));
+        }
+        */
     }
 
     private Vector3 GetBaseInput()

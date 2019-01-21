@@ -1,0 +1,27 @@
+STEPS TO REPRODUCE IMAGES
+
+In Unity Editor:
+    If using the Unity editor, first open the project by navigating to 
+    /Assets/Scenes/MainScene.unity and double clicking on it. This should open Unity.
+    Once open, click the play button at the top and be sure you 
+    can see your "Game" window. 
+
+If using build executable:
+    Unzip the file "HW1_SkylarWurster_Mac.zip" if on Mac, and 
+    the file "HW1_SkylarWurster_Windows.zip" if on PC. Locate the .app or .exe file
+    within the unzipped folder and double click that. Adjust the resolution and
+    graphics settings to your liking.
+
+
+INSTUCTIONS WHILE RUNNING
+    After running the visualization, you will see 6 buttons on the right. Two are
+    for selecting the mesh shown for each data point - cube or sphere. Select one
+    you would like. The other 4 buttons switch between each of the 4 visualizations.
+    To navigate in the scene, hold down shift while pressing WSAD to move forward, 
+    backward, left, and right, respectively. Similarly, Q and E will make you move
+    downward and upward, respectively. While holding shift still, moving the mouse 
+    will cause the camera to rotate.
+
+
+NOTES:
+    Best viewed in at least 1920x1080 for UI concerns.

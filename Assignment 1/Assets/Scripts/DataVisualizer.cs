@@ -1,17 +1,23 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
 
 public class DataVisualizer : MonoBehaviour
 {
     public string fileLocation = "Assets/Data/dataset1.txt";
     public float xSpacing, zSpacing;
     public float maxHeight;
+    public float xTicks, yTicks, zTicks;
     public GameObject vizGameObject;
     public Mesh arrow, sphere;
+    public GameObject TMProPrefab;
     List<List<float>> data;
 
     ParticleSystem.Particle[] particles;
+    float cutoffPlaneHeight;
+    int currentViz = 0;
 
     void Start()
     {
@@ -204,11 +210,21 @@ public class DataVisualizer : MonoBehaviour
     }
 
 
+    public void SetCutoffPlaneHeight(Slider slider)
+    {
 
+        cutoffPlaneHeight = slider.value;
+        if (currentViz == 1 || currentViz == 4)
+        {
+            //StopCoroutine(SliderChanged(2));
+            StartCoroutine(SliderChanged(2));
+        }
+    }
 
     public void InstantiateParticles()
     {
         StopAllCoroutines();
+        currentViz = 0;
         particles = new ParticleSystem.Particle[data.Count * data[0].Count];
         for(int i = 0; i < data.Count * data[0].Count; i++)
         {
@@ -216,11 +232,84 @@ public class DataVisualizer : MonoBehaviour
             particles[i].startSize = 1;
             particles[i].startColor = Color.black;
         }
-        vizGameObject.GetComponent<ParticleSystem>().SetParticles(particles, data[0].Count * data.Count);       
+
+        vizGameObject.GetComponent<ParticleSystem>().SetParticles(particles, data[0].Count * data.Count);
+        GameObject xGrid = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        GameObject zGrid = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        GameObject yGrid = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        zGrid.GetComponent<Renderer>().material.color = Color.blue;
+        xGrid.GetComponent<Renderer>().material.color = Color.red;
+        yGrid.GetComponent<Renderer>().material.color = Color.green;
+
+
+        xGrid.transform.localScale = new Vector3(data[0].Count * xSpacing, 1, 1);
+        zGrid.transform.localScale = new Vector3(1, 1, data.Count * zSpacing);
+        yGrid.transform.localScale = new Vector3(1, maxHeight, 1);
+
+
+        xGrid.transform.position = new Vector3(data[0].Count * xSpacing / 2f, 0, -1);
+        zGrid.transform.position = new Vector3(-1, 0, data.Count * zSpacing / 2f);
+        yGrid.transform.position = new Vector3(-1, maxHeight / 2f, -1);
+
+        GameObject xLabel = Instantiate(TMProPrefab);
+        xLabel.transform.position = new Vector3(data[0].Count * xSpacing + 40, 0, 0);
+        xLabel.GetComponent<TextMeshPro>().text = "X sample # (row)";
+        xLabel.name = "xLabel";
+        xLabel.transform.LookAt(xLabel.transform.position - Vector3.up);
+
+        GameObject yLabel = Instantiate(TMProPrefab);
+        yLabel.transform.position = new Vector3(0, maxHeight + 10, 0);
+        yLabel.GetComponent<TextMeshPro>().text = "float value";
+        yLabel.name = "yLabel";
+        yLabel.transform.LookAt(yLabel.transform.position - Vector3.right);
+
+
+        GameObject zLabel = Instantiate(TMProPrefab);
+        zLabel.transform.position = new Vector3(0, 0, data.Count * zSpacing + 10);
+        zLabel.GetComponent<TextMeshPro>().text = "Z sample # (column)";
+        zLabel.name = "zLabel";
+        zLabel.transform.LookAt(zLabel.transform.position - Vector3.up);
+
+        GameObject zero = Instantiate(TMProPrefab);
+        zero.transform.position = new Vector3(-5, 0, -5);
+        zero.GetComponent<TextMeshPro>().text = "0";
+        zero.GetComponent<TextMeshPro>().fontSize = 48;
+        zero.name = "zero";
+        zero.transform.LookAt(zero.transform.position - Vector3.up);
+
+        for (int i = 1; i <= xTicks; i++)
+        {
+            GameObject xTick = Instantiate(TMProPrefab);
+            xTick.transform.position = new Vector3((i / (float)xTicks) * data[0].Count * xSpacing, 0, -5);
+            xTick.GetComponent<TextMeshPro>().text = "" + (int)((i / (float)xTicks) * data[0].Count);
+            xTick.GetComponent<TextMeshPro>().fontSize = 48;
+            xTick.name = "xTick" + i;
+            xTick.transform.LookAt(xTick.transform.position - Vector3.up);
+        }
+        for (int i = 1; i <= yTicks; i++)
+        {
+            GameObject yTick = Instantiate(TMProPrefab);
+            yTick.transform.position = new Vector3(-5, (i / (float)yTicks) * maxHeight, -5);
+            yTick.GetComponent<TextMeshPro>().text = "" + ((i / (float)yTicks));
+            yTick.GetComponent<TextMeshPro>().fontSize = 48;
+            yTick.name = "yTick" + i;
+            yTick.transform.LookAt(yTick.transform.position - Vector3.right);
+        }
+        for (int i = 1; i <= zTicks; i++)
+        {
+            GameObject zTick = Instantiate(TMProPrefab);
+            zTick.transform.position = new Vector3(-5, 0, (i / (float)zTicks) * data.Count * zSpacing);
+            zTick.GetComponent<TextMeshPro>().text = "" + (int)((i / (float)zTicks) * data.Count);
+            zTick.GetComponent<TextMeshPro>().fontSize = 48;
+            zTick.name = "zTick" + i;
+            zTick.transform.LookAt(zTick.transform.position - Vector3.up);
+        }
+
     }
 
     public void StartVisualization1()
     {
+        currentViz = 1;
         this.StopAllCoroutines();
         //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization1Pretty(2));
@@ -242,7 +331,7 @@ public class DataVisualizer : MonoBehaviour
                     Color.Lerp(Color.black, Color.white, dataVal), 
                     0.25f);
                 particles[i].startSize = Mathf.Lerp(particles[i].startSize,
-                    1,
+                    dataVal > cutoffPlaneHeight ? 1 : 0,
                     0.25f);
             }
 
@@ -255,7 +344,7 @@ public class DataVisualizer : MonoBehaviour
             float dataVal = data[(int)(i / data[0].Count)][i % data[0].Count];
             particles[i].position = new Vector3(particles[i].position.x, dataVal * maxHeight, particles[i].position.z);
             particles[i].startColor = Color.Lerp(Color.black, Color.white, dataVal);
-            particles[i].startSize = 1;
+            particles[i].startSize = dataVal > cutoffPlaneHeight ? 1 : 0;
         }
 
         vizGameObject.GetComponent<ParticleSystem>().SetParticles(particles, data[0].Count * data.Count);
@@ -263,6 +352,7 @@ public class DataVisualizer : MonoBehaviour
 
     public void StartVisualization2()
     {
+        currentViz = 2;
         this.StopAllCoroutines();
         //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization2Pretty(2));
@@ -306,6 +396,7 @@ public class DataVisualizer : MonoBehaviour
 
     public void StartVisualization3()
     {
+        currentViz = 3;
         this.StopAllCoroutines();
         //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization3Pretty(2));
@@ -353,6 +444,7 @@ public class DataVisualizer : MonoBehaviour
 
     public void StartVisualization4()
     {
+        currentViz = 4;
         this.StopAllCoroutines();
         //vizGameObject.GetComponent<ParticleSystemRenderer>().mesh = sphere;
         StartCoroutine(Visualization4Pretty(2));
@@ -376,7 +468,7 @@ public class DataVisualizer : MonoBehaviour
                      colors[(int)(i / data[0].Count)][i % data[0].Count],
                     0.25f);
                 particles[i].startSize = Mathf.Lerp(particles[i].startSize,
-                    1,
+                    dataVal > cutoffPlaneHeight ? 1 : 0,
                     0.25f);
             }
 
@@ -389,10 +481,26 @@ public class DataVisualizer : MonoBehaviour
             float dataVal = data[(int)(i / data[0].Count)][i % data[0].Count];
             particles[i].position = new Vector3(particles[i].position.x, dataVal * maxHeight, particles[i].position.z);
             particles[i].startColor = colors[(int)(i / data[0].Count)][i % data[0].Count];
-            particles[i].startSize = 1;
+            particles[i].startSize = dataVal > cutoffPlaneHeight ? 1 : 0;
         }
 
         vizGameObject.GetComponent<ParticleSystem>().SetParticles(particles, data[0].Count * data.Count);
+    }
+    IEnumerator SliderChanged(float seconds)
+    {
+        float startTime = Time.time;
+
+        for (int i = 0; i < data.Count * data[0].Count; i++)
+        {
+            float dataVal = GetDataForIndex(i);
+            if (dataVal < cutoffPlaneHeight)
+            {
+                particles[i].startSize = 0;
+            }
+            yield return null;
+        }
+        vizGameObject.GetComponent<ParticleSystem>().SetParticles(particles, data[0].Count * data.Count);
+
     }
 }
 
