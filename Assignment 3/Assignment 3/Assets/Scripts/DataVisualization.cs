@@ -3,16 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using TMPro;
+using UnityEngine.UI;
 
 public class DataVisualization : MonoBehaviour
 {
-
-    public string EHRDataset;
+    public TextAsset t;
+    //public string EHRDataset;
     public GameObject TMProPrefab;
     public Material barMat;
     public float size;
     public float axisSize;
-
+    public List<Image> legendImages = new List<Image>();
+    
     float yMax, yMin, xMax, xMin;
     
     float patientBarHeight;
@@ -26,14 +28,23 @@ public class DataVisualization : MonoBehaviour
     Dictionary<string, List<string[]>> patientData;
     Dictionary<GameObject, string> hoverData;
     string earliestDate, latestDate;
-
+    bool relative = true;
     GameObject details, detailsText;
+    List<GameObject> absoluteDateUI, relativeDateUI;
+    Dictionary<GameObject, Vector3> absoluteDatePositions, relativeDatePositions;
     // Start is called before the first frame update
     void Start()
     {
         hoverData = new Dictionary<GameObject, string>();
-        headers = DataParser.GetHeaders(Path.Combine(new string[] { Application.dataPath, "Resources", EHRDataset }));
-        data = DataParser.ReadEHRDataSet(Path.Combine(new string[] { Application.dataPath, "Resources", EHRDataset }));
+        absoluteDateUI = new List<GameObject>();
+        absoluteDatePositions = new Dictionary<GameObject, Vector3>();
+        relativeDateUI = new List<GameObject>();
+        relativeDatePositions = new Dictionary<GameObject, Vector3>();
+        //headers = DataParser.GetHeaders(Path.Combine(new string[] { Application.dataPath, "Resources", EHRDataset }));
+        //data = DataParser.ReadEHRDataSet(Path.Combine(new string[] { Application.dataPath, "Resources", EHRDataset }));
+           
+        headers = DataParser.GetHeaders(t);
+        data = DataParser.ReadEHRDataSet(t);
         patientData = DataParser.dataToPatient(data);
         DataParser.orderByDate(patientData);
 
@@ -92,6 +103,8 @@ public class DataVisualization : MonoBehaviour
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out rch)){
             if(rch.collider != null && hoverData.ContainsKey(rch.collider.gameObject))
             {
+                
+
                 details.SetActive(true);
                 detailsText.SetActive(true);
                 detailsText.GetComponent<TextMeshPro>().text = hoverData[rch.collider.gameObject];
@@ -116,16 +129,22 @@ public class DataVisualization : MonoBehaviour
             detailsText.SetActive(false);
         }
     }
+
     Vector2 CreateRectFromText(string text)
     {
+        float yMaxTemp = Camera.main.orthographicSize * 2;
+        float yMinTemp = 0;
+        float xMinTemp = 0;
+        float xMaxTemp = Camera.main.orthographicSize * 2 * Screen.width / (float)Screen.height;
+
         string[] lines = text.Split(new char[] { '\n' });
-        float h = lines.Length * 0.05f * (yMax - yMin);
+        float h = lines.Length * 0.05f * (yMaxTemp - yMinTemp);
         int longestLength = 0;
         for(int i = 0; i < lines.Length; i++)
         {
             longestLength =  lines[i].Length > longestLength ? lines[i].Length : longestLength;
         }
-        float w = longestLength * 0.01f * (xMax - xMin);
+        float w = longestLength * 0.01f * (xMaxTemp - xMinTemp);
         return new Vector2(w, h);
     }
     IEnumerator CreateVisualization()
@@ -146,8 +165,9 @@ public class DataVisualization : MonoBehaviour
         yAxis.GetComponent<Renderer>().material.color = Color.white;
         yAxis.transform.localScale = new Vector3(axisSize, yMax - yMin, 1);
         yAxis.transform.position = new Vector3((xMax - xMin) / 2f, (yMax - yMin) / 2f, 0);
+        
 
-        /*
+        
         System.DateTime currentTime = System.DateTime.Parse(earliestDate);
         while(System.DateTime.Compare(currentTime, System.DateTime.Parse(latestDate)) < 0)
         {
@@ -160,15 +180,27 @@ public class DataVisualization : MonoBehaviour
             float yearFromStart = differenceInYears(earliestDate, currentTime.ToShortDateString());
             timeAxis.transform.position = new Vector3((xMax - xMin) * (yearFromStart / yearDif), (yMax - yMin) / 2f, 0);
             GameObject text = GameObject.Instantiate(TMProPrefab);
-            text.transform.position = new Vector3((xMax - xMin) * (yearFromStart / yearDif), (yMax - yMin) / 2f, -2);
+            text.transform.position = new Vector3((xMax - xMin) * (yearFromStart / yearDif), -text.GetComponent<RectTransform>().sizeDelta.y / 2f, -2);
             text.GetComponent<TextMeshPro>().text = currentTime.ToShortDateString();
             currentTime = currentTime.AddYears(1);
+            timeAxis.SetActive(false);
+            text.SetActive(false);
+            absoluteDateUI.Add(timeAxis);
+            absoluteDateUI.Add(text);
         }
-        */
+        
         GameObject xAxisText = Instantiate(TMProPrefab);
         xAxisText.GetComponent<TextMeshPro>().text = "Days since TBI";
         xAxisText.GetComponent<RectTransform>().sizeDelta = new Vector3((xMax - xMin) / 10f, (yMax - yMin) / 20f, 1);
         xAxisText.transform.position = new Vector3((xMax - xMin) / 2f, -xAxisText.GetComponent<RectTransform>().sizeDelta.y * 1.25f, 0);
+        relativeDateUI.Add(xAxisText);
+
+        GameObject xAxisText2 = Instantiate(TMProPrefab);
+        xAxisText2.GetComponent<TextMeshPro>().text = "Date";
+        xAxisText2.GetComponent<RectTransform>().sizeDelta = new Vector3((xMax - xMin) / 10f, (yMax - yMin) / 20f, 1);
+        xAxisText2.transform.position = new Vector3((xMax - xMin) / 2f, -xAxisText2.GetComponent<RectTransform>().sizeDelta.y * 1.25f, 0);
+        xAxisText2.SetActive(false);
+        absoluteDateUI.Add(xAxisText2);
 
         GameObject yAxisText = Instantiate(TMProPrefab);
         yAxisText.GetComponent<TextMeshPro>().text = "Patient ID";
@@ -185,13 +217,16 @@ public class DataVisualization : MonoBehaviour
             timeAxis.GetComponent<Renderer>().material = barMat;
             timeAxis.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             timeAxis.GetComponent<Renderer>().material.color = Color.white;
-            timeAxis.transform.localScale = new Vector3(axisSize / 10f, yMax - yMin, 1);
+            timeAxis.transform.localScale = new Vector3(axisSize / 2f, yMax - yMin, 1);
             timeAxis.transform.position = new Vector3(x, y, 1);
 
             GameObject text = Instantiate(TMProPrefab);
-            text.GetComponent<TextMeshPro>().text = "" + 365 * (a / 10f) * differenceInYears(earliestDate, latestDate) / 2f;
+            text.GetComponent<TextMeshPro>().text = "" + (int)(365 * (a / 10f) * differenceInYears(earliestDate, latestDate) / 2f);
             text.transform.GetComponent<RectTransform>().sizeDelta = new Vector2((xMax - xMin) / 18f, (yMax - yMin) / 30f);
             text.transform.position = new Vector3(x, -text.GetComponent<RectTransform>().sizeDelta.y / 2f, 0);
+
+            relativeDateUI.Add(timeAxis);
+            relativeDateUI.Add(text);
         }
         for (int a = -1; a > -10; a--)
         {
@@ -203,14 +238,16 @@ public class DataVisualization : MonoBehaviour
             timeAxis.GetComponent<Renderer>().material = barMat;
             timeAxis.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             timeAxis.GetComponent<Renderer>().material.color = Color.white;
-            timeAxis.transform.localScale = new Vector3(axisSize / 10f, yMax - yMin, 1);
+            timeAxis.transform.localScale = new Vector3(axisSize / 2f, yMax - yMin, 1);
             timeAxis.transform.position = new Vector3(x, y, 1);
 
             GameObject text = Instantiate(TMProPrefab);
-            text.GetComponent<TextMeshPro>().text = "" + 365 * (a / 10f) * differenceInYears(earliestDate, latestDate) / 2f;
+            text.GetComponent<TextMeshPro>().text = "" + (int)(365 * (a / 10f) * differenceInYears(earliestDate, latestDate) / 2f);
             text.transform.GetComponent<RectTransform>().sizeDelta = new Vector2((xMax - xMin) / 18f, (yMax - yMin) / 30f);
             text.transform.position = new Vector3(x, -text.GetComponent<RectTransform>().sizeDelta.y / 2f, 0);
 
+            relativeDateUI.Add(timeAxis);
+            relativeDateUI.Add(text);
         }
 
         // Populate the graph one person at a time
@@ -226,6 +263,7 @@ public class DataVisualization : MonoBehaviour
             patientBar.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             patientBar.transform.localScale = patientToBarScale(patientData[x]);
             patientBar.transform.position = patientToBarPosTimecentric(patientData[x], i);
+            absoluteDatePositions.Add(patientBar, patientBar.transform.position);
             patientBar.transform.parent = g.transform;
 
             GameObject patientTBI = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -249,7 +287,7 @@ public class DataVisualization : MonoBehaviour
                 GameObject patientEncounterBar = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 patientEncounterBar.transform.name = "patientEncounter " + patientData[x][j][8];
                 patientEncounterBar.GetComponent<Renderer>().material = barMat;
-                patientEncounterBar.GetComponent<Renderer>().material.color = Random.ColorHSV();
+                patientEncounterBar.GetComponent<Renderer>().material.color = Color.black;
                 patientEncounterBar.GetComponent<Renderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 patientEncounterBar.transform.localScale = patientToBarScale(patientData[x]);
                 patientEncounterBar.transform.position = patientToBarPosTimecentric(patientData[x], i);
@@ -272,12 +310,14 @@ public class DataVisualization : MonoBehaviour
                 if(patientData[x][j][14] == "1")
                 {
                     dataString += headers[14] + "\n";
+                    patientEncounterBar.GetComponent<Renderer>().material.color = legendImages[0].color;
                 }
                 for(int k = 18; k < patientData[x][j].Length; k++)
                 {
                     if(patientData[x][j][k] == "1")
                     {
                         dataString += headers[k] + "\n";
+                        patientEncounterBar.GetComponent<Renderer>().material.color = legendImages[k - 17].color;
                     }
                 }
                 hoverData.Add(patientEncounterBar, dataString);
@@ -287,10 +327,45 @@ public class DataVisualization : MonoBehaviour
 
             patientBar.transform.position = new Vector3(patientBar.transform.position.x - (patientTBI.transform.position.x - (xMax - xMin) / 2f),
                 patientBar.transform.position.y, patientBar.transform.position.z);
+            relativeDatePositions.Add(patientBar, patientBar.transform.position);
             i++;
             yield return null;
         }
 
+    }
+    public void SwitchAbsoluteRelative()
+    {
+        relative = !relative;
+        if (relative)
+        {
+            for(int i = 0; i < relativeDateUI.Count; i++)
+            {
+                relativeDateUI[i].SetActive(true);
+            }
+            for (int i = 0; i < absoluteDateUI.Count; i++)
+            {
+                absoluteDateUI[i].SetActive(false);
+            }
+            foreach(KeyValuePair<GameObject, Vector3> pair in relativeDatePositions)
+            {
+                pair.Key.transform.position = pair.Value;
+            }
+        }
+        else
+        {
+            for (int i = 0; i < relativeDateUI.Count; i++)
+            {
+                relativeDateUI[i].SetActive(false);
+            }
+            for (int i = 0; i < absoluteDateUI.Count; i++)
+            {
+                absoluteDateUI[i].SetActive(true);
+            }
+            foreach (KeyValuePair<GameObject, Vector3> pair in absoluteDatePositions)
+            {
+                pair.Key.transform.position = pair.Value;
+            }
+        }
     }
     private Vector3 patientToBarScale(List<string[]> patient)
     {

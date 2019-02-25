@@ -5,6 +5,17 @@ using System.IO;
 using System.Text.RegularExpressions;
 public static class DataParser
 {
+    public static string[] GetHeaders(TextAsset t)
+    {
+        string text = t.text;
+        if(text == "")
+            text = System.Text.Encoding.Default.GetString(t.bytes);
+        
+        string[] lines = text.Split(new char[] { '\n' });
+        Regex CSVParser = new Regex(",(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))");
+        return CSVParser.Split(lines[0]);
+    }
+
     public static string[] GetHeaders(string filename)
     {
         string[] data;
@@ -16,6 +27,26 @@ public static class DataParser
             string[] X = CSVParser.Split(line);
             data = X;            
         }
+        return data;
+    }
+    public static List<string[]> ReadEHRDataSet(TextAsset t)
+    {
+        string text = t.text;
+        if (text == "")
+            text = System.Text.Encoding.Default.GetString(t.bytes);
+        List<string[]> data = new List<string[]>();
+        string[] lines = text.Split(new char[] { '\n' });
+
+        for(int i = 1; i < lines.Length; i++)
+        {
+            Regex CSVParser = new Regex(",(?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))");
+
+            //Separating columns to array
+            string[] X = CSVParser.Split(lines[i]);
+
+            data.Add(X);
+        }
+        
         return data;
     }
     public static List<string[]> ReadEHRDataSet(string filename)
