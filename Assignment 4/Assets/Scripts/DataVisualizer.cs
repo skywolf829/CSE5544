@@ -9,7 +9,7 @@ public class DataVisualizer : MonoBehaviour
     public TextAsset t;
     public Mesh arrowMesh;
     public GameObject TMProPrefab;
-    public Gradient gradient;
+    public Gradient gradient, thermal, matter, phase;
     public int samplesPerRow, samplesPerCol;
 
     public GameObject gradientKnobPrefab;
@@ -293,6 +293,54 @@ public class DataVisualizer : MonoBehaviour
         jitterEnabled = !jitterEnabled;
         CreateParticleVisualization(samplesPerRow, samplesPerCol);
     }
+    public void SetThermalPreset()
+    {
+        gradientColorKeys = new List<GradientColorKey>();
+        for (int i = 0; i < thermal.colorKeys.Length; i++)
+        {
+            gradientColorKeys.Add(thermal.colorKeys[i]);
+        }
+        gradientAlphaKeys = new List<GradientAlphaKey>();
+        for (int i = 0; i < thermal.alphaKeys.Length; i++)
+        {
+            gradientAlphaKeys.Add(thermal.alphaKeys[i]);
+        }
+        UpdateGradient();
+        CreateGradientTextureFromGradient();
+        UpdateDisplay();
+    }
+    public void SetMatterPreset()
+    {
+        gradientColorKeys = new List<GradientColorKey>();
+        for (int i = 0; i < matter.colorKeys.Length; i++)
+        {
+            gradientColorKeys.Add(matter.colorKeys[i]);
+        }
+        gradientAlphaKeys = new List<GradientAlphaKey>();
+        for (int i = 0; i < matter.alphaKeys.Length; i++)
+        {
+            gradientAlphaKeys.Add(matter.alphaKeys[i]);
+        }
+        UpdateGradient();
+        CreateGradientTextureFromGradient();
+        UpdateDisplay();
+    }
+    public void SetPhasePreset()
+    {
+        gradientColorKeys = new List<GradientColorKey>();
+        for (int i = 0; i < phase.colorKeys.Length; i++)
+        {
+            gradientColorKeys.Add(phase.colorKeys[i]);
+        }
+        gradientAlphaKeys = new List<GradientAlphaKey>();
+        for (int i = 0; i < phase.alphaKeys.Length; i++)
+        {
+            gradientAlphaKeys.Add(phase.alphaKeys[i]);
+        }
+        UpdateGradient();
+        CreateGradientTextureFromGradient();
+        UpdateDisplay();
+    }
     void UpdateGradient()
     {
         gradient.SetKeys(gradientColorKeys.ToArray(), gradientAlphaKeys.ToArray());
@@ -320,6 +368,20 @@ public class DataVisualizer : MonoBehaviour
     }
     void CreateGradientTextureFromGradient()
     {
+        if (gradientColorKnobs != null)
+        {
+            for(int i = 0; i < gradientColorKnobs.Count; i++)
+            {
+                Destroy(gradientColorKnobs[i]);
+            }
+        }
+        if (gradientAlphaKnobs != null)
+        {
+            for (int i = 0; i < gradientAlphaKnobs.Count; i++)
+            {
+                Destroy(gradientAlphaKnobs[i]);
+            }
+        }
         gradientColorKeys = new List<GradientColorKey>();
         gradientColorKnobs = new List<GameObject>();
         gradientAlphaKeys = new List<GradientAlphaKey>();
@@ -336,6 +398,7 @@ public class DataVisualizer : MonoBehaviour
                 - gradientDisplay.GetComponent<RectTransform>().rect.height / 2f - 
                 knob.GetComponent<RectTransform>().rect.height / 2f);
             gradientColorKnobs.Add(knob);
+            knobSelected = knob;
         }
         for (int i = 0; i < gradient.alphaKeys.Length; i++)
         {
@@ -351,6 +414,7 @@ public class DataVisualizer : MonoBehaviour
         }
 
         UpdateGradient();
+        UpdateDisplay();
     }
     void UpdateRGBAGradients(GradientAlphaKey key)
     {
@@ -619,6 +683,7 @@ public class DataVisualizer : MonoBehaviour
             bool moveRed = false, moveGreen = false, moveBlue = false, moveAlpha = false;
             foreach (RaycastResult result in results)
             {
+                //print(result.gameObject.name);
                 if (result.gameObject.tag == "GradientKnob")
                 {
                     knobHolding = result.gameObject;
@@ -854,6 +919,7 @@ public class DataVisualizer : MonoBehaviour
                 float currentH, currentS, currentV;
                 float newH;
                 Color.RGBToHSV(gradientColorKeys[index].color, out currentH, out currentS, out currentV);
+
                 newH = (colorWheel.transform.GetChild(0).localEulerAngles.z) / 360f;
                 gradientColorKeys[index] = new GradientColorKey(Color.HSVToRGB(newH, currentS, currentV), gradientColorKeys[index].time);
                 needToUpdateDisplay = true;
